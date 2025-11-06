@@ -1,0 +1,41 @@
+name: Assignment 1
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Build Job
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r Assignment-1/requirement.txt
+          pip install ruff
+      
+      - name: Run lint check with Ruff
+        run: |
+          cd Assignment-1
+          ruff check .
+      
+      - name: Run Format Check with Ruff
+        run: |
+          cd Assignment-1
+          ruff format --check .
+
+      - name: Docker build (Assignment-1)
+        run: |
+          docker build -t assignment1:pr-${{ github.sha }} -f Assignment-1/Dockerfile Assignment-1
+
+
