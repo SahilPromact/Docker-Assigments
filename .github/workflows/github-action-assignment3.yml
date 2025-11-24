@@ -22,7 +22,7 @@ jobs:
         with:
           registry: ${{ secrets.ACR_NAME }}.azurecr.io
           username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_TOKEN }}
+          password: ${{ secrets.ACR_PASSWORD }}
           
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
