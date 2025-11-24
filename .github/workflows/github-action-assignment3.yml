@@ -23,7 +23,7 @@ jobs:
       - name: Build and push (prod)
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ./Assignment-2/Backend
           file: ./Assignment-2/Backend/Dockerfile.backend
           push: true
           tags: |
