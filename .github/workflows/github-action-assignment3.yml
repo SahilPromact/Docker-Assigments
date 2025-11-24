@@ -1,0 +1,87 @@
+name : Assignment 3
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build & Push to ACR (prod)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push (prod)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.ACR_REPOSITORY }}:prod-${{ github.sha }}
+            ${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.ACR_REPOSITORY }}:latest-prod
+   
+  deploy:
+    name: Deploy to VM
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Set IMAGE env
+      run: echo "IMAGE=${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.ACR_REPOSITORY }}:prod-${{ github.sha }}" >> $GITHUB_ENV
+
+    - name: Preparing backend.env on runner
+      run: |
+        cat > backend.env <<EOF
+        POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+        POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+        DB_HOST=${{ secrets.DB_HOST }}
+        EOF
+    
+    - name: Copy compose + env to VM
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.VM_HOST }}
+        username: ${{ secrets.VM_SSH_USER }}
+        key: ${{ secrets.VM_SSH_KEY }}
+        port: ${{ secrets.VM_SSH_PORT || '22' }}
+        source: "docker-compose.yml,backend.env"
+        target: "~/deploy/"
+
+    - name: SSH Deploy - replace image, pull & start
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.VM_HOST }}
+        username: ${{ secrets.VM_SSH_USER }}
+        key: ${{ secrets.VM_SSH_KEY }}
+        port: ${{ secrets.VM_SSH_PORT || '22' }}
+        script: |
+          set -e
+          cd ~/deploy
+
+          # sanity: replace placeholder with real image tag
+          sed -i "s|\${ACR_IMAGE}|${IMAGE}|g" /docker-compose.yml
+
+          if ! command -v docker >/dev/null 2>&1; then
+              echo "Error: Docker is NOT installed on remote host. Aborting deployment." >&2
+              exit 1
+          fi
+          if ! docker compose version >/dev/null 2>&1; then
+              sudo apt-get update
+              sudo apt-get install -y docker-compose-plugin || true
+          fi
+
+          # Pull images and start
+          docker compose -f docker-compose.yml pull
+          sudo docker compose -f docker-compose.yml up -d
+          echo "Prod app: http://${{ secrets.VM_HOST }}:${APP_PORT}"
+ 
