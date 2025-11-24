@@ -25,14 +25,20 @@ jobs:
           password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Build and push (prod)
-        uses: docker/build-push-action@v4
-        with:
-          context: ./Assignment-2/Backend
-          file: ./Assignment-2/Backend/Dockerfile.backend
-          push: true
-          tags: |
-            ${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.ACR_REPOSITORY }}:prod-${{ github.sha }}
-            ${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.ACR_REPOSITORY }}:latest-prod
+        run: |
+          set -e 
+          ACR_IMAGE_BASE="${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.ACR_REPOSITORY }}"
+          
+          # Build once with two tags
+          docker build \
+            -t "${ACR_IMAGE_BASE}:${{ github.sha }}" \
+            -t "${ACR_IMAGE_BASE}:latest" \
+            -f Assignment-2/Backend/Dockerfile.backend \
+            ./Assignment-2/Backend
+          
+          # Push both tags
+          docker push "${ACR_IMAGE_BASE}:${{ github.sha }}"
+          docker push "${ACR_IMAGE_BASE}:latest"
 
   deploy:
     name: Deploy to VM
