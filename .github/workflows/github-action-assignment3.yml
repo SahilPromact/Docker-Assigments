@@ -16,6 +16,11 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR using Azure action
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_NAME }}.azurecr.io
           
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
