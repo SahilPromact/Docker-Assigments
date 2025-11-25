@@ -77,16 +77,19 @@ jobs:
         script: |
           set -e
 
-          echo "Current user: $(whoami)"
-          echo "Home dir: $HOME"
+          DEPLOY_DIR="/home/${USER}/deploy"
+          echo "Using DEPLOY_DIR=${DEPLOY_DIR}"
 
-          echo "Listing ~/deploy recursively:"
-          ls -R ~/deploy || echo "~/deploy does not exist"
+          # Create directory if it doesn't exist (safe)
+          mkdir -p "$DEPLOY_DIR"
 
-          echo "Searching for docker-compose.yml under home:"
-          find ~ -maxdepth 5 -type f -name "docker-compose.yml" || true
+          echo "Listing ${DEPLOY_DIR} recursively:"
+          ls -R "$DEPLOY_DIR" || echo "$DEPLOY_DIR does not exist"
 
-          cd ~/deploy
+          echo "Searching for docker-compose.yml under ${DEPLOY_DIR}:"
+          find "$DEPLOY_DIR" -maxdepth 5 -type f -name "docker-compose.yml" || true
+
+          cd "$DEPLOY_DIR"
 
           # sanity: replace placeholder with real image tag
           sed -i "s|\${ACR_IMAGE}|${IMAGE}|g" Assignment-2/docker-compose.yml
