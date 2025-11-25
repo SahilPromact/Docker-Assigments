@@ -83,7 +83,10 @@ jobs:
         script: |
           set -e
           DEPLOY_DIR="/home/${USER}/deploy"
+          ls -la
           cd "$DEPLOY_DIR"
+          pwd
+          ls -la  
 
           # sanity: replace placeholder with real image tag
           sed -i "s|\${ACR_IMAGE}|${IMAGE}|g" docker-compose.yml
