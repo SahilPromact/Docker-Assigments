@@ -47,7 +47,7 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      
+
     - name: Set IMAGE env
       run: echo "IMAGE=${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.ACR_REPOSITORY }}:latest" >> $GITHUB_ENV
 
@@ -59,6 +59,9 @@ jobs:
         POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
         DB_HOST=${{ secrets.DB_HOST }}
         EOF
+        echo "${{ secrets.BACKEND_ENV }}" > backend.env
+        ls -la
+        pwd
     
     - name: Copy compose + env to VM
       uses: appleboy/scp-action@master
@@ -68,8 +71,8 @@ jobs:
         key: ${{ secrets.VM_SSH_KEY }}
         port: ${{ secrets.VM_SSH_PORT || '22' }}
         source: |
-          Assignment-2/docker-compose.yml
-          backend.env
+          ./Assignment-2/docker-compose.yml
+          ./backend.env
         target: "/home/${{ secrets.VM_SSH_USER }}/deploy/"
 
     - name: SSH Deploy - replace image, pull & start
