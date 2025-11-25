@@ -58,7 +58,7 @@ jobs:
         EOF
     
     - name: Copy compose + env to VM
-      uses: appleboy/scp-action@masterAssignment-2
+      uses: appleboy/scp-action@master
       with:
         host: ${{ secrets.VM_HOST }}
         username: ${{ secrets.VM_SSH_USER }}
