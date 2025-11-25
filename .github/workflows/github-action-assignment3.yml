@@ -24,12 +24,6 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
       
-      # - name: Login to Docker Hub
-      #   uses: docker/login-action@v3
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Build and push (prod)
         run: |
           set -e 
@@ -64,7 +58,7 @@ jobs:
         EOF
     
     - name: Copy compose + env to VM
-      uses: appleboy/scp-action@master
+      uses: appleboy/scp-action@masterAssignment-2
       with:
         host: ${{ secrets.VM_HOST }}
         username: ${{ secrets.VM_SSH_USER }}
@@ -82,6 +76,16 @@ jobs:
         port: ${{ secrets.VM_SSH_PORT || '22' }}
         script: |
           set -e
+
+          echo "Current user: $(whoami)"
+          echo "Home dir: $HOME"
+
+          echo "Listing ~/deploy recursively:"
+          ls -R ~/deploy || echo "~/deploy does not exist"
+
+          echo "Searching for docker-compose.yml under home:"
+          find ~ -maxdepth 5 -type f -name "docker-compose.yml" || true
+
           cd ~/deploy
 
           # sanity: replace placeholder with real image tag
