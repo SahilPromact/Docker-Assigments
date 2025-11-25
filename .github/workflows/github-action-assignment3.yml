@@ -23,6 +23,11 @@ jobs:
           registry: ${{ secrets.ACR_NAME }}.azurecr.io
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
+      
+      - name: Clear any bad Docker Hub credentials
+        run: |
+          docker logout docker.io || true
+          docker logout registry-1.docker.io || true
 
       - name: Build and push (prod)
         run: |
@@ -46,7 +51,7 @@ jobs:
     needs: build
     steps:
     - name: Set IMAGE env
-      run: echo "IMAGE=${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.ACR_REPOSITORY }}:prod-${{ github.sha }}" >> $GITHUB_ENV
+      run: echo "IMAGE=${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.ACR_REPOSITORY }}:latest" >> $GITHUB_ENV
 
     - name: Preparing backend.env on runner
       run: |
