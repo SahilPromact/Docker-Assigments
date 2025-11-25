@@ -71,8 +71,7 @@ jobs:
         key: ${{ secrets.VM_SSH_KEY }}
         port: ${{ secrets.VM_SSH_PORT || '22' }}
         source: |
-          ./Assignment-2/docker-compose.yml
-          ./backend.env
+          "./Assignment-2/docker-compose.yml, ./backend.env"
         target: "/home/${{ secrets.VM_SSH_USER }}/deploy/"
 
     - name: SSH Deploy - replace image, pull & start
