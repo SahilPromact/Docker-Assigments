@@ -47,7 +47,7 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    steps:
+      
     - name: Set IMAGE env
       run: echo "IMAGE=${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.ACR_REPOSITORY }}:latest" >> $GITHUB_ENV
 
