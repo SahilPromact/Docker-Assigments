@@ -83,13 +83,13 @@ jobs:
         script: |
           set -e
           DEPLOY_DIR="/home/${USER}/deploy"
-          ls -la
+          echo ls -la
           cd "$DEPLOY_DIR"
           pwd
-          ls -la  
+          echo ls -la  
 
           # sanity: replace placeholder with real image tag
-          sed -i "s|\${ACR_IMAGE}|${IMAGE}|g" docker-compose.yml
+          sed -i "s|\${ACR_IMAGE}|${IMAGE}|g" Assignment-2/docker-compose.yml
 
           if ! command -v docker >/dev/null 2>&1; then
               echo "Error: Docker is NOT installed on remote host. Aborting deployment." >&2
@@ -101,6 +101,6 @@ jobs:
           fi
 
           # Pull images and start
-          docker compose -f docker-compose.yml pull
-          sudo docker compose -f docker-compose.yml up -d
+          docker compose -f Assignment-2/docker-compose.yml pull
+          sudo docker compose -f Assignment-2/docker-compose.yml up -d
           echo "Prod app: http://${{ secrets.VM_HOST }}:${APP_PORT}"
