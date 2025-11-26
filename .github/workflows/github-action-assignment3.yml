@@ -74,13 +74,18 @@ jobs:
         target: "/home/${{ secrets.VM_SSH_USER }}/deploy/"
 
     - name: SSH Deploy - replace image, pull & start
-      uses: appleboy/ssh-action@v0.1.7
+      uses: 
+      env:
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+        ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+        ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+        VM_HOST: ${{ secrets.VM_HOST }}
+        APP_PORT: ${{ secrets.APP_PORT }}
       with:
         host: ${{ secrets.VM_HOST }}
-        username: ${{ secrets.VM_SSH_USER }}
         key: ${{ secrets.VM_SSH_KEY }}
         port: ${{ secrets.VM_SSH_PORT || '22' }}
-        envs: IMAGE,APP_PORT
+        envs: IMAGE,ACR_NAME,ACR_USERNAME,ACR_PASSWORD,VM_HOST,APP_PORT
         script: |
           set -e
           DEPLOY_DIR="/home/${USER}/deploy"
@@ -110,7 +115,12 @@ jobs:
               sudo apt-get install -y docker-compose-plugin || true
           fi
 
+          # --- Login to ACR on VM ---
+          echo "Logging into ACR on VM..."
+          echo "${ACR_PASSWORD}" | docker login "${ACR_NAME}.azurecr.io" \
+            -u "${ACR_USERNAME}" --password-stdin
+
           # Pull images and start
           docker compose -f Assignment-2/docker-compose.yml pull
           sudo docker compose -f Assignment-2/docker-compose.yml up -d
-          echo "Prod app: http://${{ secrets.VM_HOST }}:${APP_PORT}"
+          echo "Prod app: http://${VM_HOST}:${APP_PORT}"
