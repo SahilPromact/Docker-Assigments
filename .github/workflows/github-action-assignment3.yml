@@ -80,6 +80,7 @@ jobs:
         username: ${{ secrets.VM_SSH_USER }}
         key: ${{ secrets.VM_SSH_KEY }}
         port: ${{ secrets.VM_SSH_PORT || '22' }}
+        envs: IMAGE,APP_PORT
         script: |
           set -e
           DEPLOY_DIR="/home/${USER}/deploy"
