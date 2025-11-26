@@ -83,19 +83,28 @@ jobs:
         script: |
           set -e
           DEPLOY_DIR="/home/${USER}/deploy"
-          echo ls -la
           cd "$DEPLOY_DIR"
-          pwd
-          echo ls -la  
 
           # sanity: replace placeholder with real image tag
           sed -i "s|\${ACR_IMAGE}|${IMAGE}|g" Assignment-2/docker-compose.yml
 
+          # --- Install Docker if not installed ---
           if ! command -v docker >/dev/null 2>&1; then
-              echo "Error: Docker is NOT installed on remote host. Aborting deployment." >&2
-              exit 1
+              echo "Docker not found. Installing Docker..."
+
+              # Install Docker
+              curl -fsSL https://get.docker.com | sh
+
+              # Add your SSH user to docker group so 'docker' works without sudo
+              sudo usermod -aG docker $USER
+
+              # Restart docker service
+              sudo systemctl restart docker
           fi
+
+          # --- Install docker compose plugin if not installed ---
           if ! docker compose version >/dev/null 2>&1; then
+              echo "docker compose plugin missing. Installing..."
               sudo apt-get update
               sudo apt-get install -y docker-compose-plugin || true
           fi
