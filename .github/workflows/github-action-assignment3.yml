@@ -74,7 +74,7 @@ jobs:
         target: "/home/${{ secrets.VM_SSH_USER }}/deploy/"
 
     - name: SSH Deploy - replace image, pull & start
-      uses: 
+      uses: appleboy/ssh-action@v0.1.7
       env:
         ACR_NAME: ${{ secrets.ACR_NAME }}
         ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
@@ -83,6 +83,7 @@ jobs:
         APP_PORT: ${{ secrets.APP_PORT }}
       with:
         host: ${{ secrets.VM_HOST }}
+        username: ${{ secrets.VM_SSH_USER }}
         key: ${{ secrets.VM_SSH_KEY }}
         port: ${{ secrets.VM_SSH_PORT || '22' }}
         envs: IMAGE,ACR_NAME,ACR_USERNAME,ACR_PASSWORD,VM_HOST,APP_PORT
