@@ -53,14 +53,16 @@ jobs:
 
     - name: Preparing backend.env on runner
       run: |
-        cat > backend.env <<EOF
+        cat > .env <<EOF
         POSTGRES_DB=${{ secrets.POSTGRES_DB }}
         POSTGRES_USER=${{ secrets.POSTGRES_USER }}
         POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
         DB_HOST=${{ secrets.DB_HOST }}
         EOF
-        echo "${{ secrets.BACKEND_ENV }}" > backend.env
-        ls -la
+
+        # Move it into Assignment-2/Backend   
+        mv .env Assignment-2/Backend/.env
+        ls -R
         pwd
     
     - name: Copy compose + env to VM
@@ -70,7 +72,7 @@ jobs:
         username: ${{ secrets.VM_SSH_USER }}
         key: ${{ secrets.VM_SSH_KEY }}
         port: ${{ secrets.VM_SSH_PORT || '22' }}
-        source: "Assignment-2/docker-compose.yml,backend.env"
+        source: "Assignment-2/docker-compose.yml,Assignment-2/Backend/.env"
         target: "/home/${{ secrets.VM_SSH_USER }}/deploy/"
 
     - name: SSH Deploy - replace image, pull & start
