@@ -6,7 +6,14 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy and prepare start.sh script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh && \
+    apt-get update && apt-get install -y dos2unix && \
+    dos2unix /app/start.sh && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY . .
 
 EXPOSE 8000
-CMD ["python", "app.py"]
+CMD ["/app/start.sh"]

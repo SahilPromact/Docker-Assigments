@@ -126,4 +126,4 @@ jobs:
           # Pull images and start
           docker compose -f Assignment-2/docker-compose.yml pull
           sudo docker compose -f Assignment-2/docker-compose.yml up -d
-          echo "Prod app: http://${VM_HOST}:${APP_PORT}"
+          echo "Application started successfully"

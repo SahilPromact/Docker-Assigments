@@ -1,75 +1,34 @@
 from flask import Flask, jsonify
 import os
-import psycopg2
-import psycopg2.extras
 from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, scoped_session
+from models import Item
 
 load_dotenv()
 
 app = Flask(__name__)
 
+# Database configuration
 DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("POSTGRES_DB")
 DB_USER = os.getenv("POSTGRES_USER")
 DB_PASS = os.getenv("POSTGRES_PASSWORD")
 
+# Create SQLAlchemy engine
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
+engine = create_engine(DATABASE_URL, echo=False)
 
-def get_db_connection():
-    return psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASS,
-    )
+# Create session factory
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Use scoped_session for thread-safe sessions
+db_session = scoped_session(SessionLocal)
 
 
-def initialize_database():
-    """Create target database and items table if they do not exist."""
-    try:
-        # 1️⃣ Connect to the default 'postgres' database
-        conn = psycopg2.connect(
-            host=DB_HOST,
-            database="postgres",
-            user=DB_USER,
-            password=DB_PASS
-        )
-        conn.autocommit = True
-        cur = conn.cursor()
+def get_db():
+    """Get a database session"""
+    return db_session()
 
-        # 2️⃣ Check if the target DB exists
-        cur.execute("SELECT 1 FROM pg_database WHERE datname = %s;", (DB_NAME,))
-        exists = cur.fetchone()
-
-        # 3️⃣ Create it if not exists
-        if not exists:
-            cur.execute(f"CREATE DATABASE {DB_NAME};")
-            print(f"Database '{DB_NAME}' created successfully.")
-        else:
-            print(f"Database '{DB_NAME}' already exists.")
-
-        cur.close()
-        conn.close()
-
-        # 4️⃣ Now connect to the target DB and create tables
-        conn = get_db_connection()
-        conn.autocommit = True
-        cur = conn.cursor()
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS items (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
-                source TEXT NOT NULL,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            );
-            """
-        )
-        cur.close()
-        conn.close()
-        print("Table 'items' ensured successfully.")
-
-    except Exception as e:
-        print("Error initializing database:", e)
 
 @app.route("/")
 def home():
@@ -77,50 +36,43 @@ def home():
 
 @app.route("/db-check")
 def db_check():
+    db = get_db()
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT NOW();")
-        result = cur.fetchone()
-        conn.close()
-        return jsonify({"db_connection": "Db Connection Successful", "time": str(result)})
+        result = db.execute(text("SELECT NOW();")).fetchone()
+        return jsonify({"db_connection": "Db Connection Successful", "time": str(result[0])})
     except Exception as e:
         return jsonify({"db_connection": "failed", "error": str(e)})
+    finally:
+        db.close()
 
 @app.route("/items", methods=["GET"])
 def get_items():
+    db = get_db()
     try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT id, name, source, created_at FROM items ORDER BY id ASC;")
-        rows = cur.fetchall()
-        cur.close()
-        conn.close()
-        return jsonify({"items": rows})
+        items = db.query(Item).order_by(Item.id.asc()).all()
+        return jsonify({"items": [item.to_dict() for item in items]})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        db.close()
 
 
 @app.route("/add-item", methods=["POST"])
 def add_item():
+    db = get_db()
     try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(
-            "INSERT INTO items (name, source) VALUES (%s, %s) RETURNING id, name, source, created_at;",
-            ("static item", "static"),
-        )
-        new_row = cur.fetchone()
-        conn.commit()
-        cur.close()
-        conn.close()
-        return jsonify({"status": "added", "item": new_row}), 201
+        new_item = Item(name="static item", source="static")
+        db.add(new_item)
+        db.commit()
+        db.refresh(new_item)  # Refresh to get the generated id and created_at
+        return jsonify({"status": "added", "item": new_item.to_dict()}), 201
     except Exception as e:
+        db.rollback()
         return jsonify({"error": str(e)}), 500
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     print("🚀 Starting Flask application...")
-    print(f"📊 Database config: Host={DB_HOST}, DB={DB_NAME}, User={DB_USER}")
     with app.app_context():
-        initialize_database()
-    app.run(host="0.0.0.0", port=8000)
+        app.run(host="0.0.0.0", port=8000)

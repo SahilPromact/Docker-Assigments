@@ -15,6 +15,14 @@ class Item(Base):
     
     def __repr__(self):
         return f"<Item(id={self.id}, name='{self.name}', source='{self.source}')>"
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'source': self.source,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 class User(Base):
     __tablename__ = 'users'
