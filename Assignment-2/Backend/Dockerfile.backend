@@ -6,14 +6,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy and prepare start.sh script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh && \
-    apt-get update && apt-get install -y dos2unix && \
-    dos2unix /app/start.sh && \
-    rm -rf /var/lib/apt/lists/*
-
+# Copy and prepare entrypoint script
 COPY . .
 
 EXPOSE 8000
-CMD ["/app/start.sh"]
+CMD ["python", "entrypoint.py"]
