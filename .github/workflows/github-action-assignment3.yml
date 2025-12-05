@@ -2,7 +2,7 @@ name : Assignment 3
 on:
   push:
     branches:
-      - main
+      - pratice1
 
 jobs:
   build:
