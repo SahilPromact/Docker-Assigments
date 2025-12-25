@@ -1,0 +1,41 @@
+##############################
+# Stage 1 — Build the app
+##############################
+FROM node:20-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy only package files for dependency install
+COPY package*.json ./
+
+# Install ALL dependencies exactly (including devDeps)
+RUN npm ci --production=false
+
+# Copy rest of the project
+COPY . .
+
+# Build Vite app → creates /app/dist
+RUN npm run build
+
+##############################
+# Stage 2 — Run lightweight server
+##############################
+FROM node:20-alpine AS runtime
+
+# Create non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+# Copy built files from builder
+COPY --from=builder /app/dist /app/build
+
+# Install the `serve` package globally to serve static files in the production environment
+RUN npm install -g serve
+
+# Expose port for serving the application
+EXPOSE 80
+
+# Start the `serve` command to host the application on port
+CMD ["serve", "-s", "build", "-l", "80"]

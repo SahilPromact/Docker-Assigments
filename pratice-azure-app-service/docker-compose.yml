@@ -1,0 +1,19 @@
+services:
+  backend:
+    image: ${ACR_IMAGE}
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./Backend/.env
+    restart: always
+
+  frontend:
+    build:
+      context: ./Frontend/react-app
+      dockerfile: Dockerfile.frontend
+    container_name: frontend
+    ports:
+      - "80:80"                
+    depends_on:
+      - backend
+    restart: always

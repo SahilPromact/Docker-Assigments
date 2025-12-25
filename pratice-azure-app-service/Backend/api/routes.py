@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from sqlalchemy import text
 from models import Item
 from db import get_db
@@ -35,7 +35,19 @@ def get_items():
 def add_item():
     db = get_db()
     try:
-        new_item = Item(name="static item", source="static")
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        name = data.get("name")
+        source = data.get("source")
+        
+        if not name or not source:
+            return jsonify({"error": "Both 'name' and 'source' are required"}), 400
+        
+        new_item = Item(name=name, source=source)
         db.add(new_item)
         db.commit()
         db.refresh(new_item)

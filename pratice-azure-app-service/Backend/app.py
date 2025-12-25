@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 from api.routes import api_bp
@@ -7,6 +8,9 @@ from db import db_session
 load_dotenv()
 
 app = Flask(__name__)
+
+# Enable CORS for all routes
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Register API blueprint
 app.register_blueprint(api_bp)
