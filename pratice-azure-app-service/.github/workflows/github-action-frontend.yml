@@ -1,0 +1,49 @@
+name: GitHub Action Frontend
+on: 
+    push:
+        branches:
+            - deploy-azure-app-services
+
+jobs:
+    build_and_deploy:
+        name: Build & Push to ACR
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            - name: Login to Azure
+              uses: azure/login@v1
+              with:
+                creds: ${{ secrets.AZURE_CREDS_2 }}
+            
+            - name: Login to ACR using Azure action
+              uses: azure/docker-login@v2
+              with:
+                login-server: ${{ secrets.ACR_NAME_2 }}.azurecr.io
+                username: ${{ secrets.ACR_NAME_2 }}
+                password: ${{ secrets.ACR_PASSWORD_2 }}
+            
+            - name: Build and push (prod)
+              run: |
+                set -e 
+                ACR_IMAGE_BASE="${{ secrets.ACR_NAME_2 }}.azurecr.io/${{ secrets.ACR_REPOSITORY_FRONTEND }}"
+                
+                # Build once with two tags
+                docker build \
+                    -t "${ACR_IMAGE_BASE}:${{ github.sha }}" \
+                    -t "${ACR_IMAGE_BASE}:latest" \
+                    -f Frontend/Dockerfile.frontend \
+                    ./Frontend
+            
+                # Push both tags
+                docker push "${ACR_IMAGE_BASE}:${{ github.sha }}"
+                docker push "${ACR_IMAGE_BASE}:latest"
+
+            - name: Deploy container to Azure App Service
+              uses: azure/webapps-deploy@v2
+              with:
+                app-name: '${{ secrets.WEBAPP_NAME_FRONTEND }}'
+                publish-profile: '${{ secrets.FRONTEND_WEBAPP_PUBLISH_PROFILE }}'
+                images: '${{ secrets.ACR_NAME_2 }}.azurecr.io/${{ secrets.ACR_REPOSITORY_FRONTEND }}:latest'
+            
