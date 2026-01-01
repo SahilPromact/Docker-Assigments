@@ -20,14 +20,14 @@ jobs:
             - name: Login to ACR using Azure action
               uses: azure/docker-login@v2
               with:
-                login-server: ${{ secrets.ACR_NAME_2 }}.azurecr.io
+                login-server: ${{ secrets.ACR_LOGIN_SERVER }}
                 username: ${{ secrets.ACR_NAME_2 }}
                 password: ${{ secrets.ACR_PASSWORD_2 }}
             
             - name: Build and push (prod)
               run: |
                 set -e 
-                ACR_IMAGE_BASE="${{ secrets.ACR_NAME_2 }}.azurecr.io/${{ secrets.ACR_REPOSITORY_BACKEND }}"
+                ACR_IMAGE_BASE="${{ secrets.ACR_LOGIN_SERVER }}/${{ secrets.ACR_REPOSITORY_BACKEND }}"
                 
                 # Build once with two tags
                 docker build \
@@ -45,7 +45,7 @@ jobs:
               with:
                 app-name: '${{ secrets.WEBAPP_NAME_BACKEND }}'
                 publish-profile: '${{ secrets.BACKEND_WEBAPP_PUBLISH_PROFILE }}'
-                images: '${{ secrets.ACR_NAME_2 }}.azurecr.io/${{ secrets.ACR_REPOSITORY_BACKEND }}:latest'
+                images: '${{ secrets.ACR_LOGIN_SERVER }}/${{ secrets.ACR_REPOSITORY_BACKEND }}:${{ github.sha }}'
             
     
     
