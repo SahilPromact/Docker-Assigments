@@ -48,9 +48,9 @@ def run_migrations():
 def start_app():
     """Start the Flask application"""
     print("Starting Flask application...")
-    # Using python app.py directly as requested
-    # For production, you might want to use gunicorn, but this matches your current setup
-    os.execv(sys.executable, [sys.executable, "app.py"])
+    # Using subprocess to run Flask app with the current Python interpreter
+    # This keeps the entrypoint process alive
+    subprocess.run([sys.executable, "app.py"], check=True)
 
 if __name__ == "__main__":
     wait_for_postgres()
