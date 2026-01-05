@@ -23,7 +23,13 @@ jobs:
                 login-server: ${{ secrets.ACR_LOGIN_SERVER }}
                 username: ${{ secrets.ACR_NAME_2 }}
                 password: ${{ secrets.ACR_PASSWORD_2 }}
-            
+
+            - name: Create .env file for frontend build
+              run: |
+                cat <<EOF > pratice-azure-app-service/Frontend/react-app/.env
+                VITE_API_URL=${{ secrets.VITE_API_URL }}
+                EOF
+
             - name: Build and push (prod)
               run: |
                 set -e 
